@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dojo Sakura — Самураи, Ниндзя и Каратэ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --red:#d7263d; /* основный красный */
+      --deep-red:#b0192e;
+      --soft:#fff6f7; /* очень светлый розово-белый */
+      --ink:#0f0f14;
+    }
+    html,body{height:100%;}
+    body{
+      background: radial-gradient(1200px 800px at 85% -10%, #ffb3c4 0%, transparent 45%),
+                  radial-gradient(1200px 800px at 10% -20%, #ffd5de 0%, transparent 40%),
+                  linear-gradient(180deg, #fff 0%, #fff7f8 60%, #ffeef1 100%);
+      color: var(--ink);
+    }
+    /* Плавающие лепестки сакуры */
+    .petal{
+      position: fixed;
+      top:-10vh;
+      width: 16px;
+      height: 12px;
+      pointer-events:none;
+      z-index: 1;
+      opacity:.85;
+      filter: drop-shadow(0 2px 2px rgba(215,38,61,.15));
+      animation: fall linear forwards;
+    }
+    @keyframes fall{
+      0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+      10%{opacity: .9;}
+      100%{ transform: translateY(120vh) rotate(360deg); opacity: .95; }
+    }
+    /* Декоративные линии и волны */
+    .wave-mask{
+      mask-image: radial-gradient(200% 60% at 50% -20%, #000 60%, transparent 61%);
+      -webkit-mask-image: radial-gradient(200% 60% at 50% -20%, #000 60%, transparent 61%);
+    }
+    /* Карточки — легкая анимация появления */
+    .fade-in{
+      animation: fadein .6s ease both;
+    }
+    @keyframes fadein{
+      from{opacity:0; transform: translateY(6px);}
+      to{opacity:1; transform: translateY(0);}
+    }
+    /* Акценты */
+    .kanji-stamp{
+      letter-spacing: .08em;
+      text-shadow: 0 2px 0 rgba(0,0,0,.05);
+    }
+    /* Секция-страница скрытие/показ */
+    .page{display:none;}
+    .page.active{display:block;}
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Фоновые декоративные SVG-ветви (без картинок) -->
+  <svg class="pointer-events-none fixed -z-0 opacity-30" width="0" height="0" aria-hidden="true">
+    <defs>
+      <linearGradient id="petalGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#ffd7e1"/>
+        <stop offset="100%" stop-color="#ff9db4"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Шапка -->
+  <header class="relative z-10">
+    <div class="max-w-7xl mx-auto px-5 py-5">
+      <div class="flex items-center justify-between gap-4">
+        <!-- Лого: красное солнце + тории -->
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <span class="inline-block rounded-full" style="width:44px;height:44px;background:conic-gradient(from 0deg, #ff566e, #d7263d, #b0192e, #ff566e); box-shadow:0 6px 14px rgba(215,38,61,.35);"></span>
+            <svg width="44" height="44" class="absolute inset-0" viewBox="0 0 64 64" aria-hidden="true">
+              <g fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+                <path d="M14 36h36"/>
+                <path d="M22 36v-8h20v8"/>
+                <path d="M18 28h28"/>
+              </g>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xl font-bold tracking-wide" style="font-family:'Inter', system-ui;">Dojo Sakura</div>
+            <div class="text-xs text-rose-700/80 kanji-stamp" style="font-family:'Noto Serif JP', serif;">武道 • 心 • 形</div>
+          </div>
+        </div>
+
+        <!-- Навигация -->
+        <nav class="hidden md:flex items-center gap-2">
+          <a href="#home" class="navlink px-4 py-2 rounded-lg text-sm font-semibold text-rose-900 hover:bg-rose-50 aria-[current=page]:bg-rose-100 aria-[current=page]:text-rose-900">Главная</a>
+          <a href="#courses" class="navlink px-4 py-2 rounded-lg text-sm font-semibold text-rose-900 hover:bg-rose-50">Курсы</a>
+          <a href="#schedule" class="navlink px-4 py-2 rounded-lg text-sm font-semibold text-rose-900 hover:bg-rose-50">Расписание</a>
+          <a href="#sensei" class="navlink px-4 py-2 rounded-lg text-sm font-semibold text-rose-900 hover:bg-rose-50">Сэнсеи</a>
+          <a href="#etiquette" class="navlink px-4 py-2 rounded-lg text-sm font-semibold text-rose-900 hover:bg-rose-50">Этикет додзё</a>
+          <a href "#contact" class="navlink px-4 py-2 rounded-lg text-sm font-semibold text-rose-900 hover:bg-rose-50">Контакты</a>
+        </nav>
+
+        <!-- CTA -->
+        <div class="flex items-center gap-3">
+          <button id="openEnroll" class="px-4 py-2 rounded-xl text-white font-semibold shadow-lg shadow-rose-400/30" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">
+            Записаться
+          </button>
+          <button id="menuBtn" class="md:hidden p-2 rounded-lg border border-rose-200 text-rose-800 hover:bg-rose-50" aria-label="Открыть меню">☰</button>
+        </div>
+      </div>
+    </div>
+    <!-- Мобильное меню -->
+    <div id="mobileMenu" class="md:hidden max-w-7xl mx-auto px-5 pb-4 hidden">
+      <div class="grid grid-cols-2 gap-2">
+        <a href="#home" class="moblink px-4 py-3 rounded-xl bg-white/70 hover:bg-white text-rose-900 font-semibold">Главная</a>
+        <a href="#courses" class="moblink px-4 py-3 rounded-xl bg-white/70 hover:bg-white text-rose-900 font-semibold">Курсы</a>
+        <a href="#schedule" class="moblink px-4 py-3 rounded-xl bg-white/70 hover:bg-white text-rose-900 font-semibold">Расписание</a>
+        <a href="#sensei" class="moblink px-4 py-3 rounded-xl bg-white/70 hover:bg-white text-rose-900 font-semibold">Сэнсеи</a>
+        <a href="#etiquette" class="moblink px-4 py-3 rounded-xl bg-white/70 hover:bg-white text-rose-900 font-semibold">Этикет</a>
+        <a href="#contact" class="moblink px-4 py-3 rounded-xl bg-white/70 hover:bg-white text-rose-900 font-semibold">Контакты</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Герой -->
+  <section class="relative z-0">
+    <div class="max-w-7xl mx-auto px-5 pt-10 pb-6 md:pt-16">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div class="fade-in">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-semibold mb-4">
+            🌸 Путь Воина • Bushidō
+          </div>
+          <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-rose-950" style="font-family:'Noto Serif JP', serif;">
+            Самурайский дух и искусство ниндзя
+          </h1>
+          <p class="mt-4 text-rose-900/80 text-lg">
+            Изучайте каратэ и японские боевые искусства в атмосфере дисциплины, уважения и красоты сакуры.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="#courses" class="px-5 py-3 rounded-xl text-white font-semibold shadow-lg shadow-rose-400/30" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Смотреть курсы</a>
+            <a href="#etiquette" class="px-5 py-3 rounded-xl font-semibold text-rose-900 bg-white/80 hover:bg-white border border-rose-200">О традициях</a>
+          </div>
+          <div class="mt-6 flex items-center gap-6 text-sm text-rose-800/80">
+            <div class="flex items-center gap-2"><span>🥋</span>Каратэ • Айкидо • Ниндзюцу</div>
+            <div class="flex items-center gap-2"><span>🗓️</span>Утренние и вечерние группы</div>
+          </div>
+        </div>
+        <div class="relative fade-in">
+          <!-- Иллюстрация: силуэт самурая и ветка сакуры -->
+          <div class="relative rounded-3xl overflow-hidden bg-gradient-to-b from-rose-50 to-rose-100 ring-1 ring-rose-200 p-6">
+            <svg viewBox="0 0 600 380" class="w-full h-auto">
+              <!-- Солнце -->
+              <circle cx="470" cy="110" r="70" fill="url(#sunGrad)"/>
+              <defs>
+                <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#ff8fa0"/>
+                  <stop offset="70%" stop-color="#d7263d"/>
+                  <stop offset="100%" stop-color="#b0192e"/>
+                </radialGradient>
+              </defs>
+              <!-- Ветка -->
+              <path d="M30,270 C140,220 230,230 330,190 C410,160 480,150 560,140" stroke="#7a3b3b" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <!-- Цветы -->
+              <g fill="url(#petalGrad)">
+                <g transform="translate(120,230) rotate(-12)"><circle r="10"/><circle cx="12" r="8"/><circle cy="12" r="8"/><circle cx="-12" r="8"/><circle cy="-12" r="8"/></g>
+                <g transform="translate(220,205) rotate(8)"><circle r="9"/><circle cx="11" r="7"/><circle cy="11" r="7"/><circle cx="-11" r="7"/><circle cy="-11" r="7"/></g>
+                <g transform="translate(310,180) rotate(-6)"><circle r="8"/><circle cx="10" r="6"/><circle cy="10" r="6"/><circle cx="-10" r="6"/><circle cy="-10" r="6"/></g>
+              </g>
+              <!-- Силуэт самурая -->
+              <g transform="translate(80,110) scale(0.95)">
+                <path d="M120,200c-10,-18 -18,-30 -18,-48c0,-24 22,-36 46,-36c24,0 46,12 46,36c0,18 -8,30 -18,48z" fill="#1a1a1a"/>
+                <rect x="80" y="200" width="160" height="14" fill="#1a1a1a" rx="2"/>
+                <path d="M150,135 l70,-10 l-6,16 l-68,10z" fill="#1a1a1a"/>
+                <path d="M148,138 l-62,-10 l4,14 l60,10z" fill="#1a1a1a"/>
+              </g>
+            </svg>
+            <div class="absolute bottom-0 left-0 right-0 h-10 wave-mask bg-white/60"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Контент: страницы -->
+  <main class="relative z-10 flex-1">
+    <div class="max-w-7xl mx-auto px-5 pb-16">
+      <!-- Главная -->
+      <section id="home" class="page active">
+        <div class="grid md:grid-cols-3 gap-6 mt-6">
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6 fade-in">
+            <div class="text-2xl">🥋</div>
+            <h3 class="mt-3 font-bold text-rose-950">Каратэ Сётокан</h3>
+            <p class="mt-2 text-rose-900/80">Стойки, ката, кумитэ. Укрепляем тело и дух с уважением к традиции.</p>
+            <button data-enroll="Каратэ" class="mt-4 px-4 py-2 rounded-lg text-white font-semibold" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Записаться</button>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6 fade-in">
+            <div class="text-2xl">🥷</div>
+            <h3 class="mt-3 font-bold text-rose-950">Ниндзюцу</h3>
+            <p class="mt-2 text-rose-900/80">Тактика, скрытность и контроль дистанции. Мягкость, ведущая к победе.</p>
+            <button data-enroll="Ниндзюцу" class="mt-4 px-4 py-2 rounded-lg text-white font-semibold" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Записаться</button>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6 fade-in">
+            <div class="text-2xl">🕊️</div>
+            <h3 class="mt-3 font-bold text-rose-950">Айкидо</h3>
+            <p class="mt-2 text-rose-900/80">Согласование движения, работа с балансом и направлением силы.</p>
+            <button data-enroll="Айкидо" class="mt-4 px-4 py-2 rounded-lg text-white font-semibold" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Записаться</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Курсы -->
+      <section id="courses" class="page">
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <h2 class="text-2xl md:text-3xl font-extrabold text-rose-950" style="font-family:'Noto Serif JP', serif;">Курсы и направления</h2>
+          <div class="flex items-center gap-2">
+            <button id="filterAll" class="px-3 py-2 rounded-lg bg-rose-100 text-rose-900 font-semibold">Все</button>
+            <button data-filter="beginner" class="px-3 py-2 rounded-lg border border-rose-200 text-rose-900">Новички</button>
+            <button data-filter="kids" class="px-3 py-2 rounded-lg border border-rose-200 text-rose-900">Дети</button>
+            <button data-filter="pro" class="px-3 py-2 rounded-lg border border-rose-200 text-rose-900">Продвинутые</button>
+          </div>
+        </div>
+        <div id="courseList" class="grid md:grid-cols-3 gap-6 mt-6">
+          <!-- Примеры курсов -->
+        </div>
+      </section>
+
+      <!-- Расписание -->
+      <section id="schedule" class="page">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-950 mt-4" style="font-family:'Noto Serif JP', serif;">Расписание</h2>
+        <div class="mt-4 grid lg:grid-cols-3 gap-6">
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <h3 class="font-bold text-rose-950">Утро</h3>
+            <ul class="mt-3 space-y-2 text-rose-900/80">
+              <li>Пн/Ср/Пт — 07:30 • Каратэ (новички)</li>
+              <li>Вт/Чт — 08:00 • Айкидо (база)</li>
+            </ul>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <h3 class="font-bold text-rose-950">День</h3>
+            <ul class="mt-3 space-y-2 text-rose-900/80">
+              <li>Пн/Ср — 13:00 • Каратэ (дети 8–12)</li>
+              <li>Вт/Чт — 13:30 • Ниндзюцу (техника движения)</li>
+            </ul>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <h3 class="font-bold text-rose-950">Вечер</h3>
+            <ul class="mt-3 space-y-2 text-rose-900/80">
+              <li>Пн/Ср/Пт — 19:00 • Каратэ (продвин.)</li>
+              <li>Вт/Чт — 19:30 • Айкидо (парная)</li>
+              <li>Сб — 18:00 • Ниндзюцу (тактика)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-6 flex gap-3">
+          <button id="addToCalendar" class="px-4 py-2 rounded-xl text-white font-semibold shadow-lg shadow-rose-400/30" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Добавить в календарь</button>
+          <a href="#contact" class="px-4 py-2 rounded-xl font-semibold text-rose-900 bg-white/80 hover:bg-white border border-rose-200">Задать вопрос</a>
+        </div>
+        <p id="calendarMsg" class="mt-3 text-rose-800/80"></p>
+      </section>
+
+      <!-- Сэнсеи -->
+      <section id="sensei" class="page">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-950 mt-4" style="font-family:'Noto Serif JP', serif;">Наши сэнсеи</h2>
+        <div class="mt-6 grid md:grid-cols-3 gap-6">
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <div class="text-4xl">🧘</div>
+            <h3 class="mt-3 font-bold text-rose-950">Такахаши Сатору</h3>
+            <p class="text-rose-800/80">4 дан Каратэ. 15 лет преподавания. Фокус: кихон и ката.</p>
+            <button class="mt-4 px-4 py-2 rounded-lg bg-rose-100 text-rose-900 font-semibold" data-bio="Сэнсей Сатору — сторонник чистой техники и уважения к детали.">Биография</button>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <div class="text-4xl">🥷</div>
+            <h3 class="mt-3 font-bold text-rose-950">Арасака Юри</h3>
+            <p class="text-rose-800/80">Ниндзюцу. 12 лет практики. Тактика, баланс, скрытность.</p>
+            <button class="mt-4 px-4 py-2 rounded-lg bg-rose-100 text-rose-900 font-semibold" data-bio="Юри обучает тактике и чтению намерений соперника.">Биография</button>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <div class="text-4xl">🕊️</div>
+            <h3 class="mt-3 font-bold text-rose-950">Мори Кэн</h3>
+            <p class="text-rose-800/80">Айкидо. 5 дан. Мягкость и направление силы.</p>
+            <button class="mt-4 px-4 py-2 rounded-lg bg-rose-100 text-rose-900 font-semibold" data-bio="Кэн учит использовать силу противника и сохранять спокойствие.">Биография</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Этикет -->
+      <section id="etiquette" class="page">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-950 mt-4" style="font-family:'Noto Serif JP', serif;">Этикет додзё</h2>
+        <div class="mt-6 grid md:grid-cols-2 gap-6">
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <h3 class="font-bold text-rose-950">Основы уважения</h3>
+            <ul class="mt-3 space-y-2 text-rose-900/85">
+              <li>— Поклон при входе и выходе из додзё</li>
+              <li>— Чистая форма и короткие ногти</li>
+              <li>— Тишина и внимание к сэнсею</li>
+            </ul>
+          </div>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <h3 class="font-bold text-rose-950">Безопасность</h3>
+            <ul class="mt-3 space-y-2 text-rose-900/85">
+              <li>— Разминка обязательна</li>
+              <li>— Контроль техники в паре</li>
+              <li>— Сообщайте о дискомфорте и травмах</li>
+            </ul>
+          </div>
+        </div>
+        <details class="mt-6 rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+          <summary class="font-semibold cursor-pointer text-rose-950">Что взять на первую тренировку?</summary>
+          <div class="mt-3 text-rose-900/85">Удобная спортивная форма (если нет доги), вода, полотенце. Обувь не требуется — тренируемся босиком.</div>
+        </details>
+      </section>
+
+      <!-- Контакты -->
+      <section id="contact" class="page">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-950 mt-4" style="font-family:'Noto Serif JP', serif;">Контакты и запись</h2>
+        <div class="mt-6 grid lg:grid-cols-2 gap-6">
+          <form id="contactForm" class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-rose-950">Имя</label>
+                <input required type="text" name="name" class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white/90" placeholder="Ваше имя">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-rose-950">Email</label>
+                <input required type="email" name="email" class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white/90" placeholder="example@mail.com">
+              </div>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-semibold text-rose-950">Сообщение</label>
+              <textarea required name="message" rows="4" class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white/90" placeholder="Расскажите, что вас интересует"></textarea>
+            </div>
+            <div class="mt-5 flex items-center gap-3">
+              <button type="submit" class="px-5 py-3 rounded-xl text-white font-semibold shadow-lg shadow-rose-400/30" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Отправить</button>
+              <span id="formMsg" class="text-rose-800/80"></span>
+            </div>
+          </form>
+          <div class="rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6">
+            <h3 class="font-bold text-rose-950">Адрес и время</h3>
+            <p class="mt-2 text-rose-900/85">г. Киото-Сити (демо), ул. Сакуры, 7</p>
+            <p class="text-rose-900/85">Ежедневно 07:00–21:00</p>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+              <a class="px-4 py-3 rounded-xl bg-rose-100 text-rose-900 font-semibold text-center" href="https://maps.google.com" target="_blank" rel="noopener noreferrer">Открыть на карте</a>
+              <button id="copyAddr" class="px-4 py-3 rounded-xl border border-rose-200 text-rose-900 font-semibold">Скопировать адрес</button>
+            </div>
+            <div class="mt-4">
+              <h4 class="font-semibold text-rose-950">Соцсети</h4>
+              <div class="flex gap-3 mt-2">
+                <a class="px-3 py-2 rounded-lg bg-white hover:bg-rose-50 border border-rose-200 text-rose-900" href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a class="px-3 py-2 rounded-lg bg-white hover:bg-rose-50 border border-rose-200 text-rose-900" href="https://t.me" target="_blank" rel="noopener noreferrer">Telegram</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Подвал -->
+  <footer class="mt-auto">
+    <div class="max-w-7xl mx-auto px-5 py-8">
+      <div class="rounded-3xl bg-white/70 ring-1 ring-rose-200 p-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <div class="text-rose-900/80 text-sm">© Dojo Sakura • Путь длиной в тысячу шагов начинается с первого поклона</div>
+        <div class="flex gap-3">
+          <a href="#etiquette" class="px-4 py-2 rounded-lg bg-rose-100 text-rose-900 font-semibold">Этикет</a>
+          <a href="#contact" class="px-4 py-2 rounded-lg border border-rose-200 text-rose-900 font-semibold">Контакты</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Модалка записи -->
+  <div id="enrollModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-rose-950/50"></div>
+    <div class="relative max-w-lg mx-auto mt-24 rounded-2xl bg-white p-6 ring-1 ring-rose-200">
+      <div class="flex items-start justify-between">
+        <h3 class="text-lg font-bold text-rose-950">Заявка на запись</h3>
+        <button id="closeEnroll" class="p-2 rounded-lg hover:bg-rose-50">✕</button>
+      </div>
+      <form id="enrollForm" class="mt-4">
+        <div>
+          <label class="block text-sm font-semibold text-rose-950">Направление</label>
+          <select id="courseSelect" class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 bg-white/90">
+            <option>Каратэ</option>
+            <option>Ниндзюцу</option>
+            <option>Айкидо</option>
+          </select>
+        </div>
+        <div class="mt-3 grid md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-rose-950">Имя</label>
+            <input required type="text" class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 bg-white/90" placeholder="Ваше имя">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-rose-950">Телефон</label>
+            <input required type="tel" class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 bg-white/90" placeholder="+7 (___) ___-__-__">
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="block text-sm font-semibold text-rose-950">Удобное время</label>
+          <select class="mt-1 w-full rounded-lg border border-rose-200 px-4 py-3 bg-white/90">
+            <option>Утро</option>
+            <option>День</option>
+            <option>Вечер</option>
+          </select>
+        </div>
+        <div class="mt-5 flex items-center gap-3">
+          <button type="submit" class="px-5 py-3 rounded-xl text-white font-semibold shadow-lg shadow-rose-400/30" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Отправить</button>
+          <span id="enrollMsg" class="text-rose-800/80"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Простая "многостраничность" через hash-навигацию
+    const pages = Array.from(document.querySelectorAll('.page'));
+    const navLinks = Array.from(document.querySelectorAll('nav .navlink'));
+    const mobLinks = Array.from(document.querySelectorAll('#mobileMenu .moblink'));
+    function showPage(hash){
+      const id = (hash || '#home').replace('#','');
+      pages.forEach(p => p.classList.toggle('active', p.id === id));
+      navLinks.forEach(a => {
+        if(a.getAttribute('href') === '#'+id){ a.setAttribute('aria-current','page'); }
+        else { a.removeAttribute('aria-current'); }
+      });
+      if(window.innerWidth < 768){
+        document.getElementById('mobileMenu').classList.add('hidden');
+      }
+      // плавная прокрутка к началу контента
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    window.addEventListener('hashchange', () => showPage(location.hash));
+    showPage(location.hash);
+
+    // Мобильное меню
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    menuBtn?.addEventListener('click', ()=> mobileMenu.classList.toggle('hidden'));
+    mobLinks.forEach(l => l.addEventListener('click', ()=> mobileMenu.classList.add('hidden')));
+
+    // Список курсов (генерация)
+    const sampleCourses = [
+      {title:'Каратэ: Базовый цикл', level:'beginner', desc:'Кихон, базовые стойки, первые ката.', emoji:'🥋', hours:'3× нед'},
+      {title:'Каратэ: Кумитэ+', level:'pro', desc:'Контратака, тайминг, работа в парах.', emoji:'⚡', hours:'2× нед'},
+      {title:'Ниндзюцу: Движение', level:'beginner', desc:'Баланс, скрытность, шаг-ниндзя.', emoji:'🥷', hours:'2× нед'},
+      {title:'Ниндзюцу: Тактика', level:'pro', desc:'Распознавание намерений соперника.', emoji:'🧭', hours:'1× нед'},
+      {title:'Айкидо: Дети 8–12', level:'kids', desc:'Игра и дисциплина, базовая координация.', emoji:'🧒', hours:'2× нед'},
+      {title:'Айкидо: Потоки', level:'beginner', desc:'Координация и направление силы.', emoji:'🕊️', hours:'2× нед'},
+    ];
+    const courseList = document.getElementById('courseList');
+    function renderCourses(filter=null){
+      courseList.innerHTML = '';
+      sampleCourses.filter(c => !filter || c.level===filter).forEach((c, i) => {
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl bg-white/80 ring-1 ring-rose-200 p-6 fade-in';
+        card.style.animationDelay = (i*60)+'ms';
+        card.innerHTML = `
+          <div class="text-2xl">${c.emoji}</div>
+          <h3 class="mt-3 font-bold text-rose-950">${c.title}</h3>
+          <p class="mt-2 text-rose-900/80">${c.desc}</p>
+          <div class="mt-3 text-sm text-rose-900/70">Занятий: ${c.hours}</div>
+          <div class="mt-4 flex gap-2">
+            <button data-enroll="${c.title}" class="px-4 py-2 rounded-lg text-white font-semibold" style="background:linear-gradient(180deg, var(--red), var(--deep-red));">Записаться</button>
+            <button class="px-4 py-2 rounded-lg bg-rose-100 text-rose-900 font-semibold" data-more="${c.title}">Подробнее</button>
+          </div>
+        `;
+        courseList.appendChild(card);
+      });
+    }
+    renderCourses();
+
+    // Фильтры
+    document.getElementById('filterAll').addEventListener('click', ()=>renderCourses());
+    document.querySelectorAll('[data-filter]').forEach(btn=>{
+      btn.addEventListener('click', ()=> renderCourses(btn.getAttribute('data-filter')));
+    });
+
+    // Делегирование кнопок "Записаться" и "Подробнее"
+    document.body.addEventListener('click', (e)=>{
+      const enrollBtn = e.target.closest('[data-enroll]');
+      if(enrollBtn){
+        openEnroll(enrollBtn.getAttribute('data-enroll'));
+      }
+      const moreBtn = e.target.closest('[data-more]');
+      if(moreBtn){
+        const title = moreBtn.getAttribute('data-more');
+        alert('Краткая программа: разогрев, техника, практика. Курс: '+title);
+      }
+      const bioBtn = e.target.closest('[data-bio]');
+      if(bioBtn){
+        alert(bioBtn.getAttribute('data-bio'));
+      }
+    });
+
+    // Модалка записи
+    const enrollModal = document.getElementById('enrollModal');
+    const courseSelect = document.getElementById('courseSelect');
+    function openEnroll(prefill){
+      if(prefill){ courseSelect.value = prefill; }
+      enrollModal.classList.remove('hidden');
+    }
+    document.getElementById('openEnroll').addEventListener('click', ()=> openEnroll());
+    document.getElementById('closeEnroll').addEventListener('click', ()=> enrollModal.classList.add('hidden'));
+    document.getElementById('enrollForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      document.getElementById('enrollMsg').textContent = 'Заявка принята! Мы свяжемся с вами сегодня.';
+      setTimeout(()=> {
+        enrollModal.classList.add('hidden');
+        document.getElementById('enrollMsg').textContent = '';
+      }, 1400);
+    });
+
+    // Контактная форма
+    document.getElementById('contactForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const formMsg = document.getElementById('formMsg');
+      formMsg.textContent = 'Спасибо! Сообщение отправлено (демо).';
+      setTimeout(()=> formMsg.textContent = '', 1800);
+    });
+
+    // "Добавить в календарь" — создаём .ics и скачиваем
+    document.getElementById('addToCalendar').addEventListener('click', ()=>{
+      const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Dojo Sakura//Schedule//RU',
+        'BEGIN:VEVENT',
+        'UID:'+Date.now()+'@dojosakura',
+        'DTSTAMP:20240101T090000Z',
+        'DTSTART:20250108T160000Z',
+        'DTEND:20250108T170000Z',
+        'SUMMARY:Тренировка в Dojo Sakura',
+        'DESCRIPTION:Добро пожаловать на тренировку! Возьмите воду и хорошее настроение.',
+        'LOCATION:Kyoto City, Sakura 7',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+      const blob = new Blob([ics], {type:'text/calendar'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'dojo_sakura_training.ics';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      const msg = document.getElementById('calendarMsg');
+      msg.textContent = 'Файл календаря скачан. Импортируйте его в свой календарь.';
+    });
+
+    // Копирование адреса
+    document.getElementById('copyAddr').addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText('г. Киото-Сити, ул. Сакуры, 7');
+        alert('Адрес скопирован!');
+      }catch{
+        alert('Не удалось скопировать адрес.');
+      }
+    });
+
+    // Плавающие лепестки — лёгкая генерация
+    function createPetal(){
+      const p = document.createElement('div');
+      p.className = 'petal';
+      // Рисуем лепесток как SVG в background
+      const hue = 350 + Math.floor(Math.random()*10); // розово-красный
+      const w = 12 + Math.random()*10;
+      const h = 8 + Math.random()*8;
+      const drift = (Math.random()*100 - 50); // отклонение
+      const dur = 8 + Math.random()*8;
+      p.style.left = (Math.random()*100)+'vw';
+      p.style.width = w+'px';
+      p.style.height = h+'px';
+      p.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), hsl(${hue} 80% 75%))`;
+      p.style.borderRadius = '60% 40% 60% 40% / 60% 40% 60% 40%';
+      p.style.transform = `translateX(${drift}px)`;
+      p.style.animationDuration = dur+'s';
+      // небольшой горизонтальный "виляет" через interval
+      const sway = setInterval(()=>{
+        const dx = Math.sin(Date.now()/300 + Math.random()*6)*8;
+        p.style.marginLeft = dx+'px';
+      }, 120);
+      p.addEventListener('animationend', ()=>{
+        clearInterval(sway);
+        p.remove();
+      });
+      document.body.appendChild(p);
+    }
+    // Старт генерации лепестков
+    setInterval(createPetal, 900);
+
+    // Безопасность: предотвращаем переходы страницы по формам
+    // (уже используем preventDefault во всех формах)
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'983137a7e52f0b98',t:'MTc1ODUzNzk3NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
